@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Market Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: all 0.3s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .price-up {
+            color: #10B981; /* Green 500 */
+        }
+        .price-down {
+            color: #EF4444; /* Red 500 */
+        }
+        .event-card {
+            border-left: 4px solid;
+        }
+        .event-good { border-color: #10B981; }
+        .event-bad { border-color: #EF4444; }
+        .event-neutral { border-color: #6B7280; }
+        
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .market-condition-btn { transition: all 0.2s ease-in-out; }
+        .active-condition {
+            border-color: #3b82f6 !important; /* blue-500 */
+            transform: scale(1.05);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            background-color: white !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 p-4 lg:p-8">
+
+    <div id="game-container" class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900">Stock Market Simulator</h1>
+            <p class="text-lg text-gray-600 mt-2">A game theory simulation with competing AI trading strategies.</p>
+        </div>
+
+        <!-- Market Condition Selector -->
+        <div class="mb-6">
+            <h3 class="text-center text-xl font-semibold mb-3">Select Market Condition</h3>
+            <div id="market-condition-selector" class="flex justify-center gap-4 flex-wrap">
+                <button data-condition="BULL" class="market-condition-btn bg-green-100 text-green-800 font-bold py-2 px-5 rounded-lg border-2 border-transparent">
+                    📈 Bull Market
+                </button>
+                <button data-condition="NEUTRAL" class="market-condition-btn active-condition font-bold py-2 px-5 rounded-lg border-2 border-blue-500 bg-white">
+                     sideways Neutral
+                </button>
+                <button data-condition="BEAR" class="market-condition-btn bg-red-100 text-red-800 font-bold py-2 px-5 rounded-lg border-2 border-transparent">
+                    📉 Bear Market
+                </button>
+            </div>
+        </div>
+
+        <!-- Controls and Game Status -->
+        <div class="flex flex-col md:flex-row justify-center items-center gap-4 mb-8">
+            <button id="startGameBtn" class="w-full md:w-auto bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-300 transform hover:scale-105">
+                Start New Simulation
+            </button>
+            <div id="status-display" class="card p-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-lg w-full md:w-auto">
+                <div><strong>Round:</strong> <span id="round-counter" class="font-mono">0</span></div>
+                <div class="border-l h-6 border-gray-300 hidden sm:block"></div>
+                <div><strong>Time Left:</strong> <span id="timer" class="font-mono">5s</span></div>
+                <div class="border-l h-6 border-gray-300 hidden sm:block"></div>
+                <div><strong>Player Capital:</strong> <span id="player-capital" class="font-mono">$0.00</span></div>
+                <div class="border-l h-6 border-gray-300 hidden sm:block"></div>
+                <div><strong>Market Capital:</strong> <span id="market-capital" class="font-mono">$0.00</span></div>
+            </div>
+        </div>
+        
+        <!-- Winner Display -->
+        <div id="winner-display" class="hidden text-center card bg-green-100 border-2 border-green-500 p-6 my-8 max-w-2xl mx-auto">
+            <h2 class="text-2xl font-bold text-green-800">🎉 Simulation Over! 🎉</h2>
+            <p id="winnerText" class="text-xl mt-2 text-green-700"></p>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Column 1: Players -->
+            <div class="lg:col-span-1 space-y-4">
+                <h2 class="text-2xl font-semibold text-center">Players</h2>
+                <div id="players-container" class="space-y-4 max-h-[70vh] overflow-y-auto p-2 rounded-lg bg-gray-50">
+                    <!-- Player cards will be injected here -->
+                </div>
+            </div>
+
+            <!-- Column 2: Market -->
+            <div class="lg:col-span-1 space-y-4">
+                <h2 class="text-2xl font-semibold text-center">Companies</h2>
+                <div id="companies-container" class="space-y-6">
+                    <!-- Company cards will be injected here -->
+                </div>
+            </div>
+
+            <!-- Column 3: Event Log -->
+            <div class="lg:col-span-1 space-y-4">
+                <h2 class="text-2xl font-semibold text-center">Market Log</h2>
+                <div id="event-log-container" class="card p-4 space-y-3 h-[70vh] flex flex-col-reverse overflow-y-auto bg-gray-50">
+                    <!-- Event log items will be injected here -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+<script>
+    const
+        playersContainer = document.getElementById('players-container'),
+        companiesContainer = document.getElementById('companies-container'),
+        eventLogContainer = document.getElementById('event-log-container'),
+        roundCounter = document.getElementById('round-counter'),
+        timerDisplay = document.getElementById('timer'),
+        startGameBtn = document.getElementById('startGameBtn'),
+        winnerDisplay = document.getElementById('winner-display'),
+        winnerText = document.getElementById('winnerText'),
+        playerCapitalDisplay = document.getElementById('player-capital'),
+        marketCapitalDisplay = document.getElementById('market-capital'),
+        marketConditionSelector = document.getElementById('market-condition-selector');
+
+    // --- Game Configuration ---
+    const CONFIG = {
+        NUM_PLAYERS: 10,
+        STARTING_CASH: 10,
+        MAX_ROUNDS: 20,
+        ROUND_DURATION_MS: 5000,
+        COMPANIES: [
+            { name: "Alpha Inc.", ticker: "ALPH", initialValue: 100, shares: 100, founder: "Founder A" },
+            { name: "Beta Corp.", ticker: "BETA", initialValue: 100, shares: 100, founder: "Founder B" }
+        ],
+        DIVIDEND_ROUNDS: [5, 10, 15],
+        DIVIDEND_PERCENTAGE: 0.05, // 5% of company value
+    };
+
+    // --- Game Theory Elements: Player Strategies ---
+    const STRATEGIES = {
+        VALUE: { name: "Value Investor", color: "bg-green-200 text-green-800" },
+        MOMENTUM: { name: "Momentum Trader", color: "bg-blue-200 text-blue-800" },
+        SPECULATOR: { name: "Speculator", color: "bg-red-200 text-red-800" },
+        RISK_AVERSE: { name: "Risk Averse", color: "bg-yellow-200 text-yellow-800" },
+    };
+
+    // --- Game State ---
+    let state = {
+        players: [],
+        companies: [],
+        round: 0,
+        gameInterval: null,
+        roundInterval: null,
+        isGameRunning: false,
+        lastEvent: null,
+        marketCondition: 'NEUTRAL', // Default condition
+    };
+    
+    // --- Event Cards ---
+    const eventCards = [
+        { text: "New product launch is a massive success!", effect: (company) => company.value *= 1.20, companySpecific: true, type: 'good' },
+        { text: "Faces a major lawsuit, investor confidence plummets.", effect: (company) => company.value *= 0.85, companySpecific: true, type: 'bad' },
+        { text: "Overall economy is booming! All stocks get a boost.", effect: (company) => company.value *= 1.10, companySpecific: false, type: 'good' },
+        { text: "Market panic! A sudden crash affects all companies.", effect: (company) => company.value *= 0.90, companySpecific: false, type: 'bad' },
+        { text: "Announces record profits, stock soars!", effect: (company) => company.value *= 1.15, companySpecific: true, type: 'good' },
+        { text: "Regulatory hurdles create uncertainty.", effect: (company) => company.value *= 0.95, companySpecific: true, type: 'bad' },
+        { text: "Market is stable. No significant news.", effect: (company) => {}, companySpecific: false, type: 'neutral' },
+    ];
+
+    // --- Initialization ---
+    function initializeGame() {
+        state.round = 0;
+        state.isGameRunning = true;
+        winnerDisplay.classList.add('hidden');
+        eventLogContainer.innerHTML = '';
+        
+        // Initialize Players with Strategies
+        state.players = [];
+        const strategyKeys = Object.keys(STRATEGIES);
+        for (let i = 0; i < CONFIG.NUM_PLAYERS; i++) {
+            state.players.push({
+                id: i,
+                name: `Player ${i + 1}`,
+                cash: CONFIG.STARTING_CASH,
+                shares: {},
+                netWorth: CONFIG.STARTING_CASH,
+                strategy: strategyKeys[i % strategyKeys.length], // Assign strategies cyclically
+            });
+        }
+        
+        // Initialize Companies and Founders
+        state.companies = CONFIG.COMPANIES.map((comp, index) => {
+            const founder = {
+                id: CONFIG.NUM_PLAYERS + index,
+                name: comp.founder,
+                cash: 0,
+                shares: { [comp.ticker]: comp.shares },
+                isFounder: true
+            };
+            state.players.push(founder);
+            return {
+                ...comp,
+                value: comp.initialValue,
+                price: comp.initialValue / comp.shares,
+                priceHistory: [comp.initialValue / comp.shares],
+                sharesAvailable: 0,
+                demandPressure: 0
+            };
+        });
+        
+        updateUI();
+        logEvent("Simulation started! Players and companies are ready.", "neutral");
+        
+        // Log initial market condition
+        switch(state.marketCondition) {
+            case 'BULL':
+                logEvent("The simulation begins in a BULL market. Optimism is high!", "good");
+                break;
+            case 'BEAR':
+                logEvent("The simulation begins in a BEAR market. Caution is advised.", "bad");
+                break;
+            default:
+                logEvent("The simulation begins in a NEUTRAL market.", "neutral");
+                break;
+        }
+
+        startGameLoop();
+    }
+
+    // --- Game Loop ---
+    function startGameLoop() {
+        if (state.gameInterval) clearInterval(state.gameInterval);
+        if (state.roundInterval) clearInterval(state.roundInterval);
+        
+        state.gameInterval = setInterval(runRound, CONFIG.ROUND_DURATION_MS);
+        runRound(); // Run the first round immediately
+    }
+
+    function runRound() {
+        if (state.round >= CONFIG.MAX_ROUNDS) {
+            endGame();
+            return;
+        }
+
+        state.round++;
+        roundCounter.textContent = state.round;
+        
+        let timeLeft = CONFIG.ROUND_DURATION_MS / 1000;
+        timerDisplay.textContent = `${timeLeft}s`;
+        if(state.roundInterval) clearInterval(state.roundInterval);
+        state.roundInterval = setInterval(() => {
+            timeLeft--;
+            timerDisplay.textContent = `${timeLeft}s`;
+            if (timeLeft <= 0) clearInterval(state.roundInterval);
+        }, 1000);
+
+        logEvent(`--- Round ${state.round} Begins ---`, "neutral");
+
+        // 1. Event Phase - Skewed based on market condition
+        const goodEvents = eventCards.filter(e => e.type === 'good');
+        const badEvents = eventCards.filter(e => e.type === 'bad');
+        const neutralEvents = eventCards.filter(e => e.type === 'neutral');
+        
+        let eventPool = eventCards;
+        if (state.marketCondition === 'BULL') {
+            eventPool = [...goodEvents, ...goodEvents, ...neutralEvents, ...badEvents]; // Double chance of good events
+        } else if (state.marketCondition === 'BEAR') {
+            eventPool = [...badEvents, ...badEvents, ...neutralEvents, ...goodEvents]; // Double chance of bad events
+        }
+        
+        const event = eventPool[Math.floor(Math.random() * eventPool.length)];
+        applyEvent(event);
+
+        // 2. Trading Phase (Founders and Players based on strategy)
+        simulateTrading();
+
+        // 3. Update Market Prices
+        updateMarketPrices();
+        
+        // 4. Dividend Phase
+        if (CONFIG.DIVIDEND_ROUNDS.includes(state.round)) {
+            payDividends();
+        }
+
+        // 5. Update Net Worth and UI
+        updateNetWorths();
+        updateUI();
+    }
+
+    // --- Core Logic Functions ---
+    function applyEvent(event) {
+        state.lastEvent = event; // Store event for AI decision making
+        if (event.companySpecific) {
+            const company = state.companies[Math.floor(Math.random() * state.companies.length)];
+            event.effect(company);
+            logEvent(`Event: ${company.name} ${event.text}`, event.type);
+        } else {
+            state.companies.forEach(event.effect);
+            logEvent(`Event: ${event.text}`, event.type);
+        }
+    }
+
+    function simulateTrading() {
+        const transactionLog = [];
+        let buyDemand = 0;
+        let sellPressure = 0;
+
+        // --- Founder Selling (IPO) remains the same ---
+        state.players.forEach(player => {
+            if (player.isFounder && Math.random() > 0.6) {
+                const companyToSell = state.companies.find(c => (player.shares[c.ticker] || 0) > 0);
+                if (companyToSell) {
+                    const sharesToSell = Math.min(player.shares[companyToSell.ticker], Math.floor(Math.random() * 3) + 1);
+                    if (sharesToSell > 0) {
+                        player.shares[companyToSell.ticker] -= sharesToSell;
+                        companyToSell.sharesAvailable += sharesToSell;
+                        transactionLog.push(`${player.name} put ${sharesToSell} ${companyToSell.ticker} on market.`);
+                    }
+                }
+            }
+        });
+
+        // --- Strategic Player Trading ---
+        const publicPlayers = state.players.filter(p => !p.isFounder);
+        publicPlayers.forEach(player => {
+            const decision = getPlayerAction(player);
+            if (decision.action === 'BUY' && decision.ticker) {
+                const company = state.companies.find(c => c.ticker === decision.ticker);
+                if (company && player.cash >= company.price) {
+                     // Prefer buying from other players first
+                    const seller = publicPlayers.find(s => {
+                        if (s.id === player.id || (s.shares[decision.ticker] || 0) <= 0) return false;
+                        const sellerDecision = getPlayerAction(s);
+                        return sellerDecision.action === 'SELL' && sellerDecision.ticker === decision.ticker;
+                    });
+
+                    if (seller) {
+                        seller.shares[decision.ticker]--;
+                        seller.cash += company.price;
+                        player.shares[decision.ticker] = (player.shares[decision.ticker] || 0) + 1;
+                        player.cash -= company.price;
+                        transactionLog.push(`${player.name} (${player.strategy}) bought ${decision.ticker} from ${seller.name}.`);
+                        buyDemand++;
+                        sellPressure++;
+                    } else if (company.sharesAvailable > 0) { // Buy from IPO
+                        company.sharesAvailable--;
+                        player.shares[decision.ticker] = (player.shares[decision.ticker] || 0) + 1;
+                        player.cash -= company.price;
+                        transactionLog.push(`${player.name} (${player.strategy}) bought ${decision.ticker} from IPO.`);
+                        buyDemand++;
+                    }
+                }
+            } else if (decision.action === 'SELL' && decision.ticker) {
+                const company = state.companies.find(c => c.ticker === decision.ticker);
+                // Find any buyer, not just one who is actively trying to buy this specific stock, to make selling easier
+                const buyer = publicPlayers.find(b => {
+                    if (b.id === player.id || b.cash < company.price) return false;
+                     const buyerDecision = getPlayerAction(b);
+                     // Buyer wants to buy this stock OR is just generally buying
+                    return buyerDecision.action === 'BUY' && buyerDecision.ticker === decision.ticker;
+                });
+
+                if (buyer) {
+                    player.shares[decision.ticker]--;
+                    player.cash += company.price;
+                    buyer.shares[decision.ticker] = (buyer.shares[decision.ticker] || 0) + 1;
+                    buyer.cash -= company.price;
+                    transactionLog.push(`${player.name} (${player.strategy}) sold ${decision.ticker} to ${buyer.name}.`);
+                    sellPressure++;
+                    buyDemand++;
+                }
+            }
+        });
+        
+        state.companies.forEach(c => c.demandPressure += (buyDemand - sellPressure));
+        
+        if (transactionLog.length > 0) {
+           logEvent(transactionLog.join(' '), "neutral");
+        } else {
+           logEvent("A quiet round. No major trades occurred.", "neutral");
+        }
+    }
+
+    function getPlayerAction(player) {
+        const { strategy, cash, shares } = player;
+        const lastEventType = state.lastEvent ? state.lastEvent.type : 'neutral';
+
+        // --- Value Investor Logic ---
+        if (strategy === 'VALUE') {
+            const undervaluedStock = state.companies.find(c => c.price < (c.value / c.shares) * 0.9);
+            if (undervaluedStock && cash >= undervaluedStock.price) return { action: 'BUY', ticker: undervaluedStock.ticker };
+            
+            const overvaluedStock = state.companies.find(c => (shares[c.ticker] || 0) > 0 && c.price > (c.value / c.shares) * 1.1);
+            if (overvaluedStock) return { action: 'SELL', ticker: overvaluedStock.ticker };
+        }
+
+        // --- Momentum Trader Logic ---
+        if (strategy === 'MOMENTUM') {
+            const risingStock = state.companies.find(c => c.price > c.priceHistory[c.priceHistory.length - 2]);
+            if (risingStock && lastEventType !== 'bad' && cash >= risingStock.price) return { action: 'BUY', ticker: risingStock.ticker };
+
+            const fallingStock = state.companies.find(c => (shares[c.ticker] || 0) > 0 && c.price < c.priceHistory[c.priceHistory.length - 2]);
+            if (fallingStock) return { action: 'SELL', ticker: fallingStock.ticker };
+        }
+
+        // --- Speculator Logic ---
+        if (strategy === 'SPECULATOR') {
+             // If good news, buy aggressively
+            if (lastEventType === 'good') {
+                const bestPerformer = state.companies.reduce((prev, curr) => (curr.price - curr.priceHistory[curr.priceHistory.length - 2]) > (prev.price - prev.priceHistory[prev.priceHistory.length - 2]) ? curr : prev);
+                if (cash >= bestPerformer.price) return { action: 'BUY', ticker: bestPerformer.ticker };
+            }
+            // Look for a stock that has fallen hard, betting on a rebound
+            const beatenDownStock = state.companies.find(c => c.price < c.value * 0.75);
+            if (beatenDownStock && cash >= beatenDownStock.price) return { action: 'BUY', ticker: beatenDownStock.ticker };
+            
+            // Sell if profits are high to realize gains
+            const profitableStock = state.companies.find(c => (shares[c.ticker] || 0) > 0 && c.price > (c.value * 1.25));
+            if (profitableStock) return { action: 'SELL', ticker: profitableStock.ticker };
+        }
+
+        // --- Risk Averse Logic ---
+        if (strategy === 'RISK_AVERSE') {
+             // If bad news, sell holdings immediately to prevent further loss
+            if (lastEventType === 'bad') {
+                const ownedStocks = Object.keys(shares).filter(t => shares[t] > 0);
+                if (ownedStocks.length > 0) return { action: 'SELL', ticker: ownedStocks[0] };
+            }
+             // Only buy the most valuable (stable) company, and only if the market isn't in a panic
+            if (lastEventType !== 'bad') {
+                const mostValuableCompany = state.companies.reduce((prev, curr) => prev.value > curr.value ? prev : curr);
+                // Also check if price is not too far above fundamental value
+                if (cash >= mostValuableCompany.price && mostValuableCompany.price < mostValuableCompany.value * 1.05) {
+                    return { action: 'BUY', ticker: mostValuableCompany.ticker };
+                }
+            }
+             // Sell if a stock becomes too volatile or drops in value
+            const riskyStock = state.companies.find(c => (shares[c.ticker] || 0) > 0 && (c.price < c.value * 0.95));
+            if (riskyStock) return { action: 'SELL', ticker: riskyStock.ticker };
+        }
+        
+        return { action: 'HOLD' }; // Default action
+    }
+
+    function updateMarketPrices() {
+        state.companies.forEach(company => {
+            const fundamentalPrice = company.value / company.shares;
+            const demandFactor = 1 + (company.demandPressure || 0) * 0.05;
+            const randomFactor = 1 + (Math.random() - 0.5) * 0.05;
+            const newPrice = fundamentalPrice * demandFactor * randomFactor;
+            
+            company.price = Math.max(0.1, newPrice);
+            company.priceHistory.push(company.price);
+            company.demandPressure = 0;
+        });
+    }
+
+    function payDividends() {
+        logEvent("Dividend Payout Round!", "good");
+        state.companies.forEach(company => {
+            const dividendPerShare = (company.value * CONFIG.DIVIDEND_PERCENTAGE) / company.shares;
+            if (dividendPerShare > 0) {
+                state.players.forEach(player => {
+                    const sharesOwned = player.shares[company.ticker] || 0;
+                    if (sharesOwned > 0) {
+                        const payout = sharesOwned * dividendPerShare;
+                        player.cash += payout;
+                        logEvent(`${player.name} received $${payout.toFixed(2)} dividend from ${company.ticker}.`, "good");
+                    }
+                });
+            }
+        });
+    }
+
+    function updateNetWorths() {
+        state.players.forEach(player => {
+            let sharesValue = 0;
+            for (const ticker in player.shares) {
+                const company = state.companies.find(c => c.ticker === ticker);
+                sharesValue += (player.shares[ticker] || 0) * (company ? company.price : 0);
+            }
+            player.netWorth = player.cash + sharesValue;
+        });
+        
+        state.players.sort((a, b) => b.netWorth - a.netWorth);
+    }
+    
+    function endGame() {
+        clearInterval(state.gameInterval);
+        clearInterval(state.roundInterval);
+        state.isGameRunning = false;
+        
+        logEvent(`--- Simulation Over! Final Results ---`, "neutral");
+        updateNetWorths();
+        updateUI();
+        
+        const winner = state.players.filter(p => !p.isFounder)[0];
+        winnerDisplay.classList.remove('hidden');
+        winnerText.textContent = `${winner.name} (${STRATEGIES[winner.strategy].name}) is the winner with a net worth of $${winner.netWorth.toFixed(2)}!`;
+    }
+
+    // --- UI Rendering ---
+    function updateUI() {
+        const totalPlayerCapital = state.players.reduce((sum, player) => sum + player.netWorth, 0);
+        const totalMarketCapital = state.companies.reduce((sum, company) => sum + (company.price * company.shares), 0);
+
+        playerCapitalDisplay.textContent = `$${totalPlayerCapital.toFixed(2)}`;
+        marketCapitalDisplay.textContent = `$${totalMarketCapital.toFixed(2)}`;
+        
+        renderPlayers();
+        renderCompanies();
+    }
+    
+    function renderPlayers() {
+        playersContainer.innerHTML = '';
+        const rankedPlayers = state.players.filter(p => !p.isFounder);
+
+        rankedPlayers.forEach((player, index) => {
+            const sharesHTML = Object.entries(player.shares)
+                .filter(([_, count]) => count > 0)
+                .map(([ticker, count]) => `<div class="bg-gray-200 text-gray-700 text-xs font-semibold px-2 py-1 rounded">${ticker}: ${count}</div>`)
+                .join('');
+            
+            const strategyInfo = STRATEGIES[player.strategy];
+
+            const playerCard = document.createElement('div');
+            playerCard.className = 'card p-4 flex flex-col space-y-2';
+            playerCard.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <span class="bg-gray-700 text-white rounded-full h-8 w-8 flex items-center justify-center font-bold">${index + 1}</span>
+                        <div>
+                            <span class="font-bold text-lg">${player.name}</span>
+                            <div class="text-xs font-semibold px-2 py-0.5 rounded-full inline-block ${strategyInfo.color}">${strategyInfo.name}</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-bold text-xl">$${player.netWorth.toFixed(2)}</div>
+                        <div class="text-sm text-gray-500">Cash: $${player.cash.toFixed(2)}</div>
+                    </div>
+                </div>
+                ${sharesHTML ? `<div class="flex flex-wrap gap-2 pt-2">${sharesHTML}</div>` : ''}
+            `;
+            playersContainer.appendChild(playerCard);
+        });
+    }
+
+    function renderCompanies() {
+        companiesContainer.innerHTML = '';
+        state.companies.forEach(company => {
+            const priceHist = company.priceHistory;
+            const oldPrice = priceHist.length > 1 ? priceHist[priceHist.length - 2] : company.price;
+            const priceChange = company.price - oldPrice;
+            const priceChangePercent = (oldPrice > 0) ? (priceChange / oldPrice) * 100 : 0;
+            const priceClass = priceChange >= 0 ? 'price-up' : 'price-down';
+            const priceSymbol = priceChange >= 0 ? '▲' : '▼';
+
+            const companyCard = document.createElement('div');
+            companyCard.className = 'card p-6';
+            companyCard.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-2xl font-bold">${company.name} (${company.ticker})</h3>
+                        <p class="text-gray-500">Founded by ${company.founder}</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-3xl font-bold ${priceClass}">$${company.price.toFixed(2)}</div>
+                        <div class="text-sm font-medium ${priceClass}">
+                            ${priceSymbol} ${priceChange.toFixed(2)} (${priceChangePercent.toFixed(2)}%)
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <p class="text-gray-600"><strong>Fundamental Value:</strong> $${company.value.toFixed(2)}</p>
+                    <p class="text-gray-600"><strong>Total Shares:</strong> ${company.shares}</p>
+                    <div id="ownership-${company.ticker}" class="mt-2 pt-2 border-t border-gray-200"></div>
+                </div>
+            `;
+            companiesContainer.appendChild(companyCard);
+
+            const founder = state.players.find(p => p.name === company.founder);
+            const founderShares = founder ? (founder.shares[company.ticker] || 0) : 0;
+            const publicFloat = company.shares - founderShares;
+            const ownershipContainer = document.getElementById(`ownership-${company.ticker}`);
+            const topShareholders = state.players
+                .filter(p => !p.isFounder && (p.shares[company.ticker] || 0) > 0)
+                .sort((a, b) => b.shares[company.ticker] - a.shares[company.ticker])
+                .slice(0, 3);
+
+            let topShareholdersHTML = topShareholders.map(p => `
+                <div class="flex justify-between text-xs text-gray-500 pl-4">
+                    <span>- ${p.name} (${p.strategy})</span>
+                    <span>${p.shares[company.ticker]} shares</span>
+                </div>`).join('');
+
+            if (topShareholders.length > 0) {
+                topShareholdersHTML = `<p class="text-xs text-gray-600 font-medium mt-1">Top Public Holders:</p>${topShareholdersHTML}`;
+            }
+
+            ownershipContainer.innerHTML = `
+                <p class="text-sm text-gray-600"><strong>Founder Holdings:</strong> ${founderShares} (${((founderShares / company.shares) * 100).toFixed(1)}%)</p>
+                <p class="text-sm text-gray-600"><strong>Public Float:</strong> ${publicFloat} (${((publicFloat / company.shares) * 100).toFixed(1)}%)</p>
+                ${topShareholdersHTML}
+            `;
+        });
+    }
+
+    function logEvent(message, type) {
+        const logItem = document.createElement('div');
+        logItem.className = `event-card p-3 rounded-md event-${type}`;
+        logItem.innerHTML = `<p class="text-sm">${message}</p>`;
+        eventLogContainer.prepend(logItem);
+
+        if (eventLogContainer.children.length > 50) {
+            eventLogContainer.removeChild(eventLogContainer.lastChild);
+        }
+    }
+
+    // --- Event Listeners ---
+    startGameBtn.addEventListener('click', initializeGame);
+    
+    marketConditionSelector.addEventListener('click', (e) => {
+        const btn = e.target.closest('.market-condition-btn');
+        if (!btn) return;
+
+        // Update state
+        state.marketCondition = btn.dataset.condition;
+
+        // Update UI
+        marketConditionSelector.querySelectorAll('.market-condition-btn').forEach(b => {
+            b.classList.remove('active-condition');
+        });
+        btn.classList.add('active-condition');
+    });
+
+    window.onload = () => {
+        logEvent("Welcome! Select a market condition and click 'Start New Simulation' to begin.", "neutral");
+    };
+
+</script>
+
+</body>
+</html>
+
