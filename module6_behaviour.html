@@ -674,15 +674,15 @@ const WAVE_DATA = {
   },
   'C': {
     label: 'Wave C',
-    name: 'Capitulation',
+    name: 'Compounding Losses',
     type: 'CORRECTIVE — FINAL DECLINE',
     typeColor: 'var(--waveC)',
     color: 'var(--waveC)',
     desc: `Disappointment, deleveraging, and concentrated selling pressure emerge as investors <strong>admit they were wrong</strong>. The emotional state makes traders susceptible to making <strong>impulsive decisions</strong> that deviate from pre-defined rules, such as <strong>selling off assets prematurely</strong> to avoid further losses. This will only <strong>compound the losses already made</strong>.`,
-    tags: ['Capitulation', 'Admit wrong', 'Impulsive decisions', 'Selling prematurely', 'Compound losses'],
+    tags: ['Compounding losses', 'Admit wrong', 'Impulsive decisions', 'Selling prematurely', 'Compound losses'],
     biases: [
-      { icon: '💔', title: 'Loss Aversion at Maximum', text: 'The priority of avoiding losses reaches fever pitch. Investors — no matter how low the price drops — now reverse and panic-sell, mirroring the exact opposite of their earlier behaviour of holding. The pain of loss is felt approximately twice as intensely as the pleasure of an equivalent gain (Prospect Theory).' },
-      { icon: '🌊', title: 'Herd Behaviour in Reverse', text: 'The same herd instinct that drove buying in Wave 3 now drives panic selling. When a market is moving down, investors are subject to a fear that others know more. As a consequence, they feel a strong impulse to sell — irrational behaviour is not an anomaly, it is commonplace.' }
+      { icon: '💔', title: 'Loss Aversion at Maximum', text: 'The priority of avoiding losses dominates all decision-making. Investors — no matter how low the price drops — now reverse and sell off assets prematurely to avoid further losses, mirroring the exact opposite of their earlier behaviour of holding. The pain of loss is felt approximately twice as intensely as the pleasure of an equivalent gain (Prospect Theory). This will only compound the losses already made.' },
+      { icon: '🌊', title: 'Herd Behaviour in Reverse', text: 'The same herd instinct that drove buying in Wave 3 now drives concentrated selling. When a market is moving down, investors are subject to a fear that others know more. As a consequence, they feel a strong impulse to sell — rather than being anomalies, irrational behaviour is commonplace.' }
     ],
     meters: { fear: 95, greed: 5, overconfidence: 5, herd: 80, lossAversion: 95 }
   }
@@ -809,7 +809,7 @@ function getProspectDesc(wave) {
     '5': 'Greed pushes investors deep into the gains domain, but overconfidence makes them act as if they are in Option B territory — gambling for even larger returns. The expected value is the same ($1,500) but 84% would normally choose certainty. Greed overrides rationality.',
     'A': 'Portfolios cross from gains back toward the reference point. The asymmetric value function means the pain of losing recent gains is felt far more intensely than the original pleasure of making them. We feel the loss of £100 more than the gain of £100.',
     'B': 'A brief recovery triggers the reflection effect. In the loss domain, Option D (50% chance to lose $1,000 or lose nothing) attracts 69% — people prefer the gamble to a certain loss. They hold on, hoping the trend restarts.',
-    'C': 'Deep in the loss domain, the S-shaped value curve steepens. Investors who were risk-seeking (holding losing positions) finally capitulate. The compounding of losses forces impulsive selling — making decisions that deviate from any pre-defined rules.'
+    'C': 'Deep in the loss domain, the S-shaped value curve steepens. Investors who were risk-seeking (holding losing positions) finally admit they were wrong. The compounding of losses forces impulsive selling — making decisions that deviate from any pre-defined rules.'
   };
   return descs[wave];
 }
