@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CETM50 — Behavioural Finance & Wave Psychology</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e17;
+  --surface: #111827;
+  --surface2: #1a2235;
+  --border: #1e2a3f;
+  --text: #e2e8f0;
+  --text-dim: #7a8ba6;
+  --text-muted: #4a5568;
+  --accent-impulse: #10b981;
+  --accent-corrective: #ef4444;
+  --wave1: #6366f1;
+  --wave2: #8b5cf6;
+  --wave3: #10b981;
+  --wave4: #f59e0b;
+  --wave5: #ef4444;
+  --waveA: #f97316;
+  --waveB: #ec4899;
+  --waveC: #dc2626;
+  --gold: #d4a053;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Header ── */
+.header {
+  padding: 28px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(10,14,23,1) 0%, rgba(10,14,23,0.95) 100%);
+  position: sticky; top: 0; z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 16px; }
+.header-badge {
+  background: linear-gradient(135deg, var(--wave3), #059669);
+  color: #000;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  padding: 5px 12px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+.header h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+.header-sub {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 0.5px;
+}
+
+/* ── Main Layout ── */
+.main {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  min-height: calc(100vh - 80px);
+}
+
+/* ── Chart Panel ── */
+.chart-panel {
+  padding: 32px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.chart-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.chart-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px;
+  color: var(--text);
+}
+.chart-legend {
+  display: flex; gap: 20px;
+  font-size: 12px; color: var(--text-dim);
+}
+.chart-legend span { display: flex; align-items: center; gap: 6px; }
+.legend-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+}
+
+.chart-container {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  flex: 1;
+  min-height: 420px;
+  overflow: hidden;
+}
+.chart-container::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    repeating-linear-gradient(90deg, transparent, transparent 79px, rgba(255,255,255,0.02) 79px, rgba(255,255,255,0.02) 80px),
+    repeating-linear-gradient(0deg, transparent, transparent 49px, rgba(255,255,255,0.02) 49px, rgba(255,255,255,0.02) 50px);
+  pointer-events: none;
+  border-radius: 12px;
+}
+
+svg.wave-chart {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Wave navigation buttons ── */
+.wave-nav {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.wave-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.25s;
+  letter-spacing: 0.5px;
+}
+.wave-btn:hover {
+  border-color: var(--text-dim);
+  color: var(--text);
+}
+.wave-btn.active {
+  border-color: var(--active-color, var(--wave3));
+  background: color-mix(in srgb, var(--active-color, var(--wave3)) 12%, transparent);
+  color: var(--active-color, var(--wave3));
+  box-shadow: 0 0 16px color-mix(in srgb, var(--active-color, var(--wave3)) 15%, transparent);
+}
+.wave-btn.impulse { --active-color: var(--accent-impulse); }
+.wave-btn.corrective { --active-color: var(--accent-corrective); }
+
+/* ── Side Panel ── */
+.side-panel {
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  overflow-y: auto;
+  max-height: calc(100vh - 80px);
+}
+.side-panel::-webkit-scrollbar { width: 4px; }
+.side-panel::-webkit-scrollbar-track { background: transparent; }
+.side-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+.panel-section {
+  padding: 28px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.panel-section:last-child { border-bottom: none; }
+
+.panel-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.wave-indicator {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.wave-number {
+  width: 48px; height: 48px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Serif Display', serif;
+  font-size: 24px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.wave-name {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px;
+  color: var(--text);
+  line-height: 1.2;
+}
+.wave-type {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  margin-top: 2px;
+}
+
+.wave-description {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--text-dim);
+  margin-bottom: 20px;
+}
+.wave-description strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ── Psychology Tags ── */
+.psych-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.psych-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.3px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: var(--text-dim);
+}
+.psych-tag.highlight {
+  border-color: var(--tag-color, var(--wave3));
+  color: var(--tag-color, var(--wave3));
+  background: color-mix(in srgb, var(--tag-color, var(--wave3)) 8%, transparent);
+}
+
+/* ── Bias Card ── */
+.bias-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 10px;
+}
+.bias-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.bias-card-title .icon {
+  font-size: 15px;
+}
+.bias-card p {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--text-dim);
+}
+
+/* ── Prospect Theory Section ── */
+.prospect-visual {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 12px;
+}
+.prospect-visual h4 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+
+/* ── Phase Progress ── */
+.phase-progress {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 16px;
+}
+.phase-dot {
+  width: 32px; height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  transition: background 0.3s;
+  cursor: pointer;
+}
+.phase-dot.active {
+  background: var(--dot-color, var(--wave3));
+}
+
+/* ── Emotion Meter ── */
+.emotion-meter {
+  margin-top: 16px;
+}
+.meter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.meter-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  width: 90px;
+  flex-shrink: 0;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.meter-bar-bg {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.meter-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Intro overlay ── */
+.intro-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(20px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.5s, visibility 0.5s;
+}
+.intro-overlay.hidden {
+  opacity: 0; visibility: hidden; pointer-events: none;
+}
+.intro-card {
+  max-width: 560px;
+  text-align: center;
+  padding: 48px;
+}
+.intro-card h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 32px;
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+.intro-card p {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-dim);
+  margin-bottom: 32px;
+}
+.intro-card p strong { color: var(--text); }
+.intro-start {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 1px;
+  padding: 14px 36px;
+  border: 1px solid var(--wave3);
+  background: color-mix(in srgb, var(--wave3) 12%, transparent);
+  color: var(--wave3);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.intro-start:hover {
+  background: color-mix(in srgb, var(--wave3) 22%, transparent);
+  box-shadow: 0 0 30px color-mix(in srgb, var(--wave3) 20%, transparent);
+}
+
+/* ── Animations ── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeIn 0.4s ease-out forwards; }
+
+@keyframes pathDraw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes pulse {
+  0%, 100% { r: 6; opacity: 1; }
+  50% { r: 9; opacity: 0.7; }
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .main { grid-template-columns: 1fr; }
+  .side-panel { max-height: none; }
+  .chart-container { min-height: 340px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Intro Overlay -->
+<div class="intro-overlay" id="intro">
+  <div class="intro-card">
+    <div style="font-size: 48px; margin-bottom: 16px;">📊🧠</div>
+    <h2>Behavioural Finance<br>&amp; Market Wave Psychology</h2>
+    <p>
+      Explore how <strong>human behaviour</strong> drives <strong>price swings</strong> in financial markets.
+      This interactive tool maps <strong>emotional biases</strong> and <strong>cognitive errors</strong>
+      from behavioural finance onto the wave structure of market cycles —
+      from <strong>unconvinced</strong> → <strong>herd impulse</strong> → <strong>overconfidence</strong> →
+      <strong>loss aversion</strong> → <strong>confirmation bias</strong>.
+    </p>
+    <button class="intro-start" onclick="document.getElementById('intro').classList.add('hidden')">
+      BEGIN EXPLORATION →
+    </button>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <div class="header-badge">MODULE 6</div>
+    <div>
+      <h1>Behavioural Finance &amp; Wave Psychology</h1>
+      <div class="header-sub">LECTURE 4 — INTRODUCTION TO ALGORITHMIC TRADING</div>
+    </div>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <!-- Chart Panel -->
+  <div class="chart-panel">
+    <div class="chart-title-row">
+      <div class="chart-title">Market Wave Structure — Collective Psychology</div>
+      <div class="chart-legend">
+        <span><div class="legend-dot" style="background: var(--accent-impulse)"></div> Impulse Phase</span>
+        <span><div class="legend-dot" style="background: var(--accent-corrective)"></div> Corrective Phase</span>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <svg class="wave-chart" id="waveChart" viewBox="0 0 760 380" preserveAspectRatio="xMidYMid meet">
+        <!-- Grid labels -->
+        <text x="12" y="30" fill="#4a5568" font-size="9" font-family="IBM Plex Mono">Price</text>
+        <text x="720" y="370" fill="#4a5568" font-size="9" font-family="IBM Plex Mono">Time</text>
+
+        <!-- Wave path -->
+        <path id="wavePath" d="M 40,300 L 120,240 L 160,270 L 340,80 L 400,150 L 480,60 L 540,160 L 600,110 L 680,300"
+              fill="none" stroke="url(#waveGradient)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+              style="stroke-dasharray: 2000; stroke-dashoffset: 2000; animation: pathDraw 2.5s ease-out 0.5s forwards;" />
+
+        <!-- Gradient -->
+        <defs>
+          <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#6366f1" />
+            <stop offset="20%" stop-color="#8b5cf6" />
+            <stop offset="40%" stop-color="#10b981" />
+            <stop offset="55%" stop-color="#f59e0b" />
+            <stop offset="65%" stop-color="#ef4444" />
+            <stop offset="75%" stop-color="#f97316" />
+            <stop offset="85%" stop-color="#ec4899" />
+            <stop offset="100%" stop-color="#dc2626" />
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <!-- Area fill -->
+        <path d="M 40,300 L 120,240 L 160,270 L 340,80 L 400,150 L 480,60 L 540,160 L 600,110 L 680,300 L 680,380 L 40,380 Z"
+              fill="url(#areaGrad)" opacity="0.12" />
+        <defs>
+          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#10b981" />
+            <stop offset="100%" stop-color="transparent" />
+          </linearGradient>
+        </defs>
+
+        <!-- Wave points -->
+        <g id="wavePoints">
+          <circle class="wave-point" data-wave="0" cx="40" cy="300" r="5" fill="#4a5568" stroke="#4a5568" stroke-width="2" style="cursor:pointer; opacity:0; animation: fadeIn 0.3s 2.5s forwards;" filter="url(#glow)" />
+          <circle class="wave-point" data-wave="1" cx="120" cy="240" r="5" fill="var(--wave1)" stroke="var(--wave1)" stroke-width="2" style="cursor:pointer; opacity:0; animation: fadeIn 0.3s 2.7s forwards;" filter="url(#glow)" />
+          <circle class="wave-point" data-wave="2" cx="160" cy="270" r="5" fill="var(--wave2)" stroke="var(--wave2)" stroke-width="2" style="cursor:pointer; opacity:0; animation: fadeIn 0.3s 2.9s forwards;" filter="url(#glow)" />
+          <circle class="wave-point" data-wave="3" cx="340" cy="80" r="5" fill="var(--wave3)" stroke="var(--wave3)" stroke-width="2" style="cursor:pointer; opacity:0; animation: fadeIn 0.3s 3.1s forwards;" filter="url(#glow)" />
+          <circle class="wave-point" data-wave="4" cx="400" cy="150" r="5" fill="var(--wave4)" stroke="var(--wave4)" stroke-width="2" style="cursor:pointer; opacity:0; animation: fadeIn 0.3s 3.3s forwards;" filter="url(#glow)" />
+          <circle class="wave-point" data-wave="5" cx="480" cy="60" r="5" fill="var(--wave5)" stroke="var(--wave5)" stroke-width="2" style="cursor:pointer; opacity:0; animation: fadeIn 0.3s 3.5s forwards;" filter="url(#glow)" />
+          <circle class="wave-point" data-wave="A" cx="540" cy="160" r="5" fill="var(--waveA)" stroke="var(--waveA)" stroke-width="2" style="cursor:pointer; opacity:0; animation: fadeIn 0.3s 3.7s forwards;" filter="url(#glow)" />
+          <circle class="wave-point" data-wave="B" cx="600" cy="110" r="5" fill="var(--waveB)" stroke="var(--waveB)" stroke-width="2" style="cursor:pointer; opacity:0; animation: fadeIn 0.3s 3.9s forwards;" filter="url(#glow)" />
+          <circle class="wave-point" data-wave="C" cx="680" cy="300" r="5" fill="var(--waveC)" stroke="var(--waveC)" stroke-width="2" style="cursor:pointer; opacity:0; animation: fadeIn 0.3s 4.1s forwards;" filter="url(#glow)" />
+        </g>
+
+        <!-- Wave labels -->
+        <g id="waveLabels" font-family="IBM Plex Mono" font-size="11" font-weight="600">
+          <text x="38" y="320" fill="#4a5568" text-anchor="middle" style="opacity:0; animation: fadeIn 0.3s 2.5s forwards;">Start</text>
+          <text x="120" y="230" fill="var(--wave1)" text-anchor="middle" style="opacity:0; animation: fadeIn 0.3s 2.7s forwards;">W1</text>
+          <text x="160" y="288" fill="var(--wave2)" text-anchor="middle" style="opacity:0; animation: fadeIn 0.3s 2.9s forwards;">W2</text>
+          <text x="340" y="68" fill="var(--wave3)" text-anchor="middle" style="opacity:0; animation: fadeIn 0.3s 3.1s forwards;">W3</text>
+          <text x="400" y="170" fill="var(--wave4)" text-anchor="middle" style="opacity:0; animation: fadeIn 0.3s 3.3s forwards;">W4</text>
+          <text x="480" y="48" fill="var(--wave5)" text-anchor="middle" style="opacity:0; animation: fadeIn 0.3s 3.5s forwards;">W5</text>
+          <text x="540" y="178" fill="var(--waveA)" text-anchor="middle" style="opacity:0; animation: fadeIn 0.3s 3.7s forwards;">A</text>
+          <text x="600" y="100" fill="var(--waveB)" text-anchor="middle" style="opacity:0; animation: fadeIn 0.3s 3.9s forwards;">B</text>
+          <text x="680" y="318" fill="var(--waveC)" text-anchor="middle" style="opacity:0; animation: fadeIn 0.3s 4.1s forwards;">C</text>
+        </g>
+
+        <!-- Phase brackets -->
+        <text x="260" y="365" fill="var(--accent-impulse)" font-size="10" font-family="IBM Plex Mono" text-anchor="middle" letter-spacing="1.5" opacity="0.6">IMPULSE WAVES</text>
+        <text x="610" y="365" fill="var(--accent-corrective)" font-size="10" font-family="IBM Plex Mono" text-anchor="middle" letter-spacing="1.5" opacity="0.6">CORRECTIVE WAVES</text>
+        <line x1="60" y1="358" x2="480" y2="358" stroke="var(--accent-impulse)" stroke-width="0.5" opacity="0.3" />
+        <line x1="500" y1="358" x2="680" y2="358" stroke="var(--accent-corrective)" stroke-width="0.5" opacity="0.3" />
+      </svg>
+    </div>
+
+    <!-- Wave Nav -->
+    <div class="wave-nav">
+      <button class="wave-btn impulse" data-wave="1" onclick="selectWave('1')">WAVE 1</button>
+      <button class="wave-btn impulse" data-wave="2" onclick="selectWave('2')">WAVE 2</button>
+      <button class="wave-btn impulse" data-wave="3" onclick="selectWave('3')">WAVE 3</button>
+      <button class="wave-btn impulse" data-wave="4" onclick="selectWave('4')">WAVE 4</button>
+      <button class="wave-btn impulse" data-wave="5" onclick="selectWave('5')">WAVE 5</button>
+      <button class="wave-btn corrective" data-wave="A" onclick="selectWave('A')">WAVE A</button>
+      <button class="wave-btn corrective" data-wave="B" onclick="selectWave('B')">WAVE B</button>
+      <button class="wave-btn corrective" data-wave="C" onclick="selectWave('C')">WAVE C</button>
+    </div>
+
+    <!-- Phase Progress -->
+    <div class="phase-progress">
+      <div class="phase-dot" data-wave="1" style="--dot-color: var(--wave1); background: var(--wave1);" onclick="selectWave('1')"></div>
+      <div class="phase-dot" data-wave="2" style="--dot-color: var(--wave2);" onclick="selectWave('2')"></div>
+      <div class="phase-dot" data-wave="3" style="--dot-color: var(--wave3);" onclick="selectWave('3')"></div>
+      <div class="phase-dot" data-wave="4" style="--dot-color: var(--wave4);" onclick="selectWave('4')"></div>
+      <div class="phase-dot" data-wave="5" style="--dot-color: var(--wave5);" onclick="selectWave('5')"></div>
+      <div style="width: 12px;"></div>
+      <div class="phase-dot" data-wave="A" style="--dot-color: var(--waveA);" onclick="selectWave('A')"></div>
+      <div class="phase-dot" data-wave="B" style="--dot-color: var(--waveB);" onclick="selectWave('B')"></div>
+      <div class="phase-dot" data-wave="C" style="--dot-color: var(--waveC);" onclick="selectWave('C')"></div>
+    </div>
+  </div>
+
+  <!-- Side Panel -->
+  <div class="side-panel" id="sidePanel">
+    <div class="panel-section" id="waveInfo">
+      <!-- Populated by JS -->
+    </div>
+    <div class="panel-section" id="biasSection">
+      <!-- Populated by JS -->
+    </div>
+    <div class="panel-section" id="meterSection">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+</div>
+
+<script>
+const WAVE_DATA = {
+  '1': {
+    label: 'Wave 1',
+    name: 'Early Positioning',
+    type: 'IMPULSE — ACCUMULATION',
+    typeColor: 'var(--wave1)',
+    color: 'var(--wave1)',
+    desc: `A small group of early, better-informed investors begins building positions. Most of the market remains <strong>unconvinced</strong> — the <strong>efficient market hypothesis</strong> (EMH) still dominates thinking. Proponents claim that any <strong>new information</strong> relevant to a company's value is <strong>quickly priced</strong> by the market, so "this move must be noise."`,
+    tags: ['Unconvinced majority', 'Smart money entry', 'EMH dominance', 'New information quickly priced'],
+    biases: [
+      { icon: '🎯', title: 'Anchoring Bias', text: 'Investors rely too heavily on the previous price as their reference point. Because the prior downtrend is still fresh, this initial piece of information acts as an anchor — they dismiss the new uptrend as a temporary bounce.' },
+      { icon: '📰', title: 'Availability Bias', text: 'Recent negative headlines are the easiest information to access, so investors base judgments on easily remembered prior experiences of losses rather than emerging positive signals.' }
+    ],
+    meters: { fear: 60, greed: 15, overconfidence: 10, herd: 10, lossAversion: 55 }
+  },
+  '2': {
+    label: 'Wave 2',
+    name: 'Testing Conviction',
+    type: 'IMPULSE — PULLBACK',
+    typeColor: 'var(--wave2)',
+    color: 'var(--wave2)',
+    desc: `Most of the market remains unconvinced, and the pullback tests conviction. Investors are subject to a <strong>fear</strong> that others <strong>know more</strong> or have <strong>more information</strong>. The priority of <strong>avoiding losses</strong> holds true — investors believe the price will <strong>eventually come back</strong> down, so they sell early positions.`,
+    tags: ['Fear of loss', 'Avoiding losses', 'Testing conviction', 'Others know more'],
+    biases: [
+      { icon: '😰', title: 'Loss Aversion', text: 'People tend to view the possibility of recouping a loss as more important than the possibility of greater gain. No matter how low the price drops, investors — believing that the price will eventually come back — often hold their bearish view rather than suffer the pain of admitting they missed the bottom.' },
+      { icon: '🔍', title: 'Confirmation Bias (Consensus Bias)', text: 'Investors avoid knowledge that contradicts their views and search for information supporting them. They choose to disregard emerging positive details about the market recovery. They are more likely to read articles that affirm their bearish stance.' }
+    ],
+    meters: { fear: 70, greed: 10, overconfidence: 8, herd: 25, lossAversion: 75 }
+  },
+  '3': {
+    label: 'Wave 3',
+    name: 'Consensus & Capital Flow',
+    type: 'IMPULSE — STRONGEST TREND',
+    typeColor: 'var(--wave3)',
+    color: 'var(--wave3)',
+    desc: `Consensus forms, capital flows in on a large scale, and the trend becomes strongest. The <strong>herd instinct</strong> explains why people tend to <strong>imitate others</strong>. Investors feel a <strong>strong impulse to do what others are doing</strong>. Emotions and biases now <strong>drive share prices</strong> — psychology drives stock market movements.`,
+    tags: ['Herd instinct', 'Imitate others', 'Strong impulse', 'Consensus forms', 'Psychology drives markets'],
+    biases: [
+      { icon: '🐑', title: 'Herd Behaviour', text: 'When a market is moving up, investors are subject to a fear that others know more or have more information. As a consequence, investors feel a strong impulse to do what others are doing — buying in large volumes as the crowd validates the trend.' },
+      { icon: '📈', title: 'Overreacting to Short-term Fluctuations', text: 'Every small dip is treated as a buying opportunity. The "buy-the-dip" view pervades — any sudden drop in the market is seen as a chance to accumulate. Investors tend to pounce on a single "telling" detail rather than the more obvious average.' }
+    ],
+    meters: { fear: 15, greed: 65, overconfidence: 55, herd: 85, lossAversion: 20 }
+  },
+  '4': {
+    label: 'Wave 4',
+    name: 'Loosening Positions',
+    type: 'IMPULSE — DISTRIBUTION',
+    typeColor: 'var(--wave4)',
+    color: 'var(--wave4)',
+    desc: `Early positions begin to loosen, disagreement widens, and some investors take profits. Some traders become <strong>fearful during a period of market volatility</strong> and are more likely to <strong>sell assets prematurely</strong>, even if technical indicators suggest the contrary. Meanwhile, <strong>beliefs are not easily shaken</strong> — others still cling to the trend.`,
+    tags: ['Profit-taking', 'Disagreement widens', 'Premature selling', 'Beliefs not shaken'],
+    biases: [
+      { icon: '⚖️', title: 'Fear vs Conviction', text: 'A trader who becomes fearful during a period of market volatility becomes more likely to sell assets prematurely, even if technical indicators suggest the contrary. This behaviour can lead to missed opportunities and undermine trading effectiveness.' },
+      { icon: '🎲', title: 'Overconfidence Bias', text: 'Experienced traders are frequently more susceptible to overconfidence. Even a seasoned trader entirely aware of margins, stock trends, and market circumstances can still make terrible choices when prospective hazards are disregarded due to excessive confidence.' }
+    ],
+    meters: { fear: 45, greed: 40, overconfidence: 50, herd: 55, lossAversion: 40 }
+  },
+  '5': {
+    label: 'Wave 5',
+    name: 'Peak Sentiment',
+    type: 'IMPULSE — OVEREXTENSION',
+    typeColor: 'var(--wave5)',
+    color: 'var(--wave5)',
+    desc: `Sentiment reaches a peak, latecomers enter, and the structure becomes increasingly overstretched. Investors are often <strong>overconfident in their judgments</strong> and tend to pounce on a single "telling" detail rather than the more obvious average. In doing so, they <strong>fail to see the larger picture</strong> by focusing too much on <strong>smaller details</strong>. Greed can lead them to <strong>hold on to positions for longer than otherwise advisable</strong>.`,
+    tags: ['Overconfident judgments', 'Fail to see larger picture', 'Smaller details', 'Greed-driven', 'Latecomers enter'],
+    biases: [
+      { icon: '🤑', title: 'Greed & Overextension', text: 'A trader driven by greed may hold onto positions for too long in the hopes of maximising profits. Such behaviour can lead to significant losses if the market changes direction or if the trader fails to exit the position at the right time. Like the dot-com bubble of the late 1990s — investors rushed to invest with little regard for fundamentals.' },
+      { icon: '🔮', title: 'Hindsight Bias', text: 'The mistaken belief that we have forecast an event in the instant we know of it. "After-the-fact investing wisdom" — the propensity to assume not just foreseeing an investment\'s result but also how that outcome may have been modified. Everyone "knew it" at the peak.' }
+    ],
+    meters: { fear: 10, greed: 90, overconfidence: 85, herd: 70, lossAversion: 10 }
+  },
+  'A': {
+    label: 'Wave A',
+    name: 'Informed Exit',
+    type: 'CORRECTIVE — INITIAL DECLINE',
+    typeColor: 'var(--waveA)',
+    color: 'var(--waveA)',
+    desc: `Informed capital starts to exit, but most participants still think it is only a <strong>temporary pullback</strong>. The "buy-the-dip" mentality persists — investors believe the price will <strong>eventually come back</strong>. Financial stress triggers a cascade: people are <strong>under stress</strong> because of finances, they release chemicals that affect their <strong>mental health</strong>, affects their <strong>ability to think</strong>.`,
+    tags: ['Temporary pullback denial', 'Informed exit', 'Eventually come back', 'Under stress', 'Affects ability to think'],
+    biases: [
+      { icon: '🧠', title: 'Stress & Impaired Decision-Making', text: 'Financial health affects mental and physical health. When people are under stress because of finances, stress chemicals affect their ability to think clearly. It affects physical health, wears you out, makes you tired. And then once you can\'t sleep, you start to have bad behaviours to deal with that.' },
+      { icon: '📉', title: 'Anchoring to Peak Price', text: 'Anchoring causes investors to rely too heavily on the peak price as their reference. They use that peak as an anchor to organise all future information — "it was at the top just weeks ago, so this dip is just temporary." This initial piece of knowledge dominates.' }
+    ],
+    meters: { fear: 50, greed: 35, overconfidence: 30, herd: 45, lossAversion: 60 }
+  },
+  'B': {
+    label: 'Wave B',
+    name: 'False Hope',
+    type: 'CORRECTIVE — BEAR TRAP',
+    typeColor: 'var(--waveB)',
+    color: 'var(--waveB)',
+    desc: `Hope and <strong>confirmation bias</strong> make people believe the trend is restarting. If the markets show a brief rally, it can prompt traders to develop a confirmation bias — they avoid knowledge that contradicts their views and <strong>search for information supporting them</strong>. Biases associated with confirmation are <strong>self-reinforcing</strong> since they frequently become <strong>stronger over time</strong>.`,
+    tags: ['Confirmation bias', 'Self-reinforcing', 'False hope', 'Believe trend restarts', 'Stronger over time'],
+    biases: [
+      { icon: '🔁', title: 'Confirmation Bias (Self-Reinforcing)', text: 'Investors avoid knowledge that contradicts views and search for information supporting them. An investor who values a specific position can choose to disregard adverse details. According to research, investors are more likely to read an article that affirms an investing choice they have made than one that challenges it. This compounds in Wave B.' },
+      { icon: '💫', title: 'Availability Bias in Reverse', text: 'The brief rally becomes the most easily accessible recent memory. People with a preference for accessibility frequently favour the information that is the easiest to access — and the B-wave rally is now fresher than the A-wave decline. They base judgments on this easily remembered recovery.' }
+    ],
+    meters: { fear: 30, greed: 50, overconfidence: 40, herd: 55, lossAversion: 35 }
+  },
+  'C': {
+    label: 'Wave C',
+    name: 'Capitulation',
+    type: 'CORRECTIVE — FINAL DECLINE',
+    typeColor: 'var(--waveC)',
+    color: 'var(--waveC)',
+    desc: `Disappointment, deleveraging, and concentrated selling pressure emerge as investors <strong>admit they were wrong</strong>. The emotional state makes traders susceptible to making <strong>impulsive decisions</strong> that deviate from pre-defined rules, such as <strong>selling off assets prematurely</strong> to avoid further losses. This will only <strong>compound the losses already made</strong>.`,
+    tags: ['Capitulation', 'Admit wrong', 'Impulsive decisions', 'Selling prematurely', 'Compound losses'],
+    biases: [
+      { icon: '💔', title: 'Loss Aversion at Maximum', text: 'The priority of avoiding losses reaches fever pitch. Investors — no matter how low the price drops — now reverse and panic-sell, mirroring the exact opposite of their earlier behaviour of holding. The pain of loss is felt approximately twice as intensely as the pleasure of an equivalent gain (Prospect Theory).' },
+      { icon: '🌊', title: 'Herd Behaviour in Reverse', text: 'The same herd instinct that drove buying in Wave 3 now drives panic selling. When a market is moving down, investors are subject to a fear that others know more. As a consequence, they feel a strong impulse to sell — irrational behaviour is not an anomaly, it is commonplace.' }
+    ],
+    meters: { fear: 95, greed: 5, overconfidence: 5, herd: 80, lossAversion: 95 }
+  }
+};
+
+let currentWave = '1';
+
+function selectWave(waveId) {
+  currentWave = waveId;
+  const data = WAVE_DATA[waveId];
+
+  // Update buttons
+  document.querySelectorAll('.wave-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.wave === waveId);
+  });
+
+  // Update progress dots
+  const waves = ['1','2','3','4','5','A','B','C'];
+  const idx = waves.indexOf(waveId);
+  document.querySelectorAll('.phase-dot').forEach((dot, i) => {
+    dot.classList.toggle('active', i <= idx);
+    if (i <= idx) dot.style.background = `var(--wave${waves[i]})`.replace('waveA','waveA').replace('waveB','waveB').replace('waveC','waveC');
+    else dot.style.background = 'var(--border)';
+  });
+
+  // Update SVG points
+  document.querySelectorAll('.wave-point').forEach(pt => {
+    const w = pt.dataset.wave;
+    if (w === waveId) {
+      pt.setAttribute('r', '8');
+      pt.style.filter = 'url(#glow)';
+      pt.style.opacity = '1';
+    } else {
+      pt.setAttribute('r', '5');
+      pt.style.filter = 'none';
+      pt.style.opacity = '0.6';
+    }
+  });
+
+  // Update side panel
+  renderSidePanel(data);
+}
+
+function renderSidePanel(data) {
+  const tagColor = data.color;
+
+  document.getElementById('waveInfo').innerHTML = `
+    <div class="panel-label">CURRENT WAVE</div>
+    <div class="wave-indicator">
+      <div class="wave-number" style="background: ${data.color};">${data.label.replace('Wave ','')}</div>
+      <div>
+        <div class="wave-name">${data.name}</div>
+        <div class="wave-type" style="color: ${data.typeColor};">${data.type}</div>
+      </div>
+    </div>
+    <div class="wave-description fade-in">${data.desc}</div>
+    <div class="psych-tags">
+      ${data.tags.map(t => `<span class="psych-tag highlight" style="--tag-color: ${tagColor};">${t}</span>`).join('')}
+    </div>
+  `;
+
+  document.getElementById('biasSection').innerHTML = `
+    <div class="panel-label">ACTIVE BIASES & COGNITIVE ERRORS</div>
+    ${data.biases.map(b => `
+      <div class="bias-card fade-in">
+        <div class="bias-card-title"><span class="icon">${b.icon}</span> ${b.title}</div>
+        <p>${b.text}</p>
+      </div>
+    `).join('')}
+  `;
+
+  const m = data.meters;
+  document.getElementById('meterSection').innerHTML = `
+    <div class="panel-label">EMOTIONAL INTENSITY</div>
+    <div class="emotion-meter">
+      ${meterRow('Fear', m.fear, '#ef4444')}
+      ${meterRow('Greed', m.greed, '#10b981')}
+      ${meterRow('Overconfidence', m.overconfidence, '#f59e0b')}
+      ${meterRow('Herd Impulse', m.herd, '#8b5cf6')}
+      ${meterRow('Loss Aversion', m.lossAversion, '#ec4899')}
+    </div>
+    <div style="margin-top: 20px;">
+      <div class="panel-label">PROSPECT THEORY FRAMING</div>
+      <div class="prospect-visual">
+        <h4>${getProspectLabel(currentWave)}</h4>
+        <p style="font-size: 12.5px; line-height: 1.65; color: var(--text-dim);">${getProspectDesc(currentWave)}</p>
+      </div>
+    </div>
+  `;
+}
+
+function meterRow(label, value, color) {
+  return `
+    <div class="meter-row">
+      <div class="meter-label">${label}</div>
+      <div class="meter-bar-bg">
+        <div class="meter-bar" style="width: ${value}%; background: ${color};"></div>
+      </div>
+      <div style="font-family: IBM Plex Mono; font-size: 11px; color: ${color}; width: 30px; text-align: right;">${value}%</div>
+    </div>
+  `;
+}
+
+function getProspectLabel(wave) {
+  const labels = {
+    '1': 'Risk-Averse Domain (Gains)',
+    '2': 'Risk-Seeking Domain (Losses)',
+    '3': 'Certainty Effect — Locking In Gains?',
+    '4': 'Transition: Gains → Losses',
+    '5': 'Deep in the Gains Domain',
+    'A': 'Crossing the Reference Point',
+    'B': 'Reflection Effect — False Recovery',
+    'C': 'Deep Loss Domain — Risk-Seeking Panic'
+  };
+  return labels[wave];
+}
+
+function getProspectDesc(wave) {
+  const descs = {
+    '1': 'Early investors face the classic gains scenario: take the sure $50 (sell early) or flip the coin for $100 (hold for more). Most pocket the sure thing — they are risk-averse in the domain of gains.',
+    '2': 'Bears face a loss scenario: accept a sure $50 loss (cover the short) or flip the coin (hold and hope). Rather than accept the loss, they probably pick the gamble. This is loss aversion at work.',
+    '3': 'With consensus building, the "certain gain" option (Option A: $1,000 → guaranteed $1,500) attracts 84% of participants. Risk-averse behaviour dominates — people prefer the sure profit over a 50/50 gamble with the same expected value.',
+    '4': 'Some investors sit on gains (risk-averse, wanting to lock in). Others sit on new positions that are now underwater (risk-seeking, refusing to realise losses). The market becomes a mix of both Prospect Theory domains.',
+    '5': 'Greed pushes investors deep into the gains domain, but overconfidence makes them act as if they are in Option B territory — gambling for even larger returns. The expected value is the same ($1,500) but 84% would normally choose certainty. Greed overrides rationality.',
+    'A': 'Portfolios cross from gains back toward the reference point. The asymmetric value function means the pain of losing recent gains is felt far more intensely than the original pleasure of making them. We feel the loss of £100 more than the gain of £100.',
+    'B': 'A brief recovery triggers the reflection effect. In the loss domain, Option D (50% chance to lose $1,000 or lose nothing) attracts 69% — people prefer the gamble to a certain loss. They hold on, hoping the trend restarts.',
+    'C': 'Deep in the loss domain, the S-shaped value curve steepens. Investors who were risk-seeking (holding losing positions) finally capitulate. The compounding of losses forces impulsive selling — making decisions that deviate from any pre-defined rules.'
+  };
+  return descs[wave];
+}
+
+// SVG point click handlers
+document.querySelectorAll('.wave-point').forEach(pt => {
+  pt.addEventListener('click', () => selectWave(pt.dataset.wave));
+});
+
+// Initialize
+selectWave('1');
+</script>
+</body>
+</html>
